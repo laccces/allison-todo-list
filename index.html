@@ -66,7 +66,6 @@
         .wheel svg {
             width: 100%;
             height: 100%;
-            transform: rotate(-90deg);
         }
 
         .wheel-center {
@@ -190,12 +189,12 @@
 
     <script>
         const options = [
-            'Emails',
-            'Teams Messages',
-            'Deal with drama',
-            'Get Ops Shit Done',
-            'Pick a new microdestination',
-            'Call Dan to Vent'
+            { label: 'Emails', display: 'Emails' },
+            { label: 'Teams Msgs', display: 'Teams Messages' },
+            { label: 'Deal w/ Drama', display: 'Deal with drama' },
+            { label: 'Ops Shit', display: 'Get Ops Shit Done' },
+            { label: 'Microdest', display: 'Pick a new microdestination' },
+            { label: 'Call Dan', display: 'Call Dan to Vent' }
         ];
 
         const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3'];
@@ -223,8 +222,8 @@
                 const startAngle = index * segmentAngle;
                 const endAngle = (index + 1) * segmentAngle;
                 
-                const startRad = (startAngle - 90) * Math.PI / 180;
-                const endRad = (endAngle - 90) * Math.PI / 180;
+                const startRad = (startAngle * Math.PI) / 180;
+                const endRad = (endAngle * Math.PI) / 180;
                 
                 const x1 = centerX + radius * Math.cos(startRad);
                 const y1 = centerY + radius * Math.sin(startRad);
@@ -232,17 +231,18 @@
                 const y2 = centerY + radius * Math.sin(endRad);
                 
                 const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                const d = `M ${centerX} ${centerY} L ${x1} ${y1} A ${radius} ${radius} 0 0 1 ${x2} ${y2} Z`;
+                const largeArcFlag = segmentAngle > 180 ? 1 : 0;
+                const d = `M ${centerX} ${centerY} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2} Z`;
                 path.setAttribute('d', d);
                 path.setAttribute('fill', colors[index]);
                 path.setAttribute('stroke', 'white');
-                path.setAttribute('stroke-width', '1');
+                path.setAttribute('stroke-width', '2');
                 svg.appendChild(path);
                 
                 // Add text label
                 const midAngle = startAngle + segmentAngle / 2;
-                const midRad = (midAngle - 90) * Math.PI / 180;
-                const textRadius = radius * 0.65;
+                const midRad = (midAngle * Math.PI) / 180;
+                const textRadius = radius * 0.7;
                 const textX = centerX + textRadius * Math.cos(midRad);
                 const textY = centerY + textRadius * Math.sin(midRad);
                 
@@ -252,10 +252,10 @@
                 text.setAttribute('text-anchor', 'middle');
                 text.setAttribute('dominant-baseline', 'middle');
                 text.setAttribute('fill', 'white');
-                text.setAttribute('font-size', '8');
+                text.setAttribute('font-size', '7');
                 text.setAttribute('font-weight', '600');
-                text.setAttribute('transform', `rotate(${midAngle}, ${textX}, ${textY})`);
-                text.textContent = option;
+                text.setAttribute('transform', `rotate(${midAngle + 90}, ${textX}, ${textY})`);
+                text.textContent = option.label;
                 svg.appendChild(text);
             });
             
@@ -274,17 +274,23 @@
             const minSpins = 3;
             const maxSpins = 5;
             const spins = Math.random() * (maxSpins - minSpins) + minSpins;
-            const randomSegment = Math.floor(Math.random() * options.length);
             const segmentAngle = 360 / options.length;
             
-            const targetRotation = currentRotation + (spins * 360) + (randomSegment * segmentAngle) + (segmentAngle / 2);
+            // Random segment to land on
+            const randomSegment = Math.floor(Math.random() * options.length);
+            
+            // The pointer is at top (0 degrees/360 degrees, which is -90 in SVG space)
+            // We want segment at index randomSegment to end up at the top
+            // Each segment starts at index * segmentAngle
+            // To land segment i at top, we need rotation = -i * segmentAngle - segmentAngle/2 (to center it)
+            // But we want to spin multiple times first
+            const targetRotation = currentRotation + (spins * 360) - (randomSegment * segmentAngle) - (segmentAngle / 2);
             
             wheel.style.transform = `rotate(${targetRotation}deg)`;
             currentRotation = targetRotation;
             
-            const normalizedRotation = targetRotation % 360;
-            const winningIndex = Math.floor((360 - normalizedRotation + (segmentAngle / 2)) / segmentAngle) % options.length;
-            selectedOption = options[winningIndex];
+            // Store the winning option
+            selectedOption = options[randomSegment].display;
             
             setTimeout(() => {
                 showResult();
