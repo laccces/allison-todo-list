@@ -1,4 +1,4 @@
-# 🎯 What Should I Work On Next?
+# 🎯 What Should Allison Work On Next?
 
 A simple, mobile-first spinning wheel web app to help you decide what to tackle next. Perfect for those moments when you can't decide which task to prioritize!
 
